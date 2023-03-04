@@ -136,6 +136,28 @@ public class HeroBehaviour : MonoBehaviour
         if (hMan.SelectedHero != myHerotype)
             return;
 
+
+        Collider[] colliders1;
+
+        colliders1 = Physics.OverlapSphere(antennaeObj.position, 0.01f,groundedMask);
+
+        if (colliders1.Length > 0)
+        {
+
+            if (colliders1[0].transform == antennaeObj.transform && colliders1.Length == 1)
+            {
+                isAntennaeInDirt = false;
+            }
+            else
+            {
+                isAntennaeInDirt = true;
+            }
+        }
+        else
+        {
+            isAntennaeInDirt = false;
+        }
+
         if (myHerotype == heroType.shovel)
         {
             if (movementInput != Vector3.zero)
@@ -170,26 +192,32 @@ public class HeroBehaviour : MonoBehaviour
             }
             else
             {
-                if (Physics.SphereCast(antennaeObj.transform.position, groundCastRadius, (transform.position - antennaeObj.transform.position).normalized, out RaycastHit hitinfo, groundCastDist, groundedMask))
+                if (!isAntennaeInDirt)
                 {
-                    if (!isAntennaeInDirt)
+                    if (Physics.Raycast(antennaeObj.position, (transform.position - antennaeObj.position).normalized, out RaycastHit hitinfo, Vector3.Distance(transform.position, antennaeObj.position), groundedMask))
                     {
-                        Collider[] colliders;
-
-                        colliders = Physics.OverlapSphere(transform.position, 0.01f);
-
-                        if (colliders.Length <=1)
-                        {
-                            Debug.LogError("WHY");
-                            localDown.transform.position = hitinfo.point + hitinfo.normal;
-                            localDown.transform.LookAt(hitinfo.point, localDown.transform.up);
-                            isGrounded = true;
-                            isFlying = false;
-                            transform.position = antennaeObj.transform.position;
-                            Physics.IgnoreLayerCollision(Constants.Layers.GroundLayer, Constants.Layers.ShovelLayer, false);
-                        }
+                        localDown.transform.position = hitinfo.point + hitinfo.normal;
+                        localDown.transform.LookAt(hitinfo.point, localDown.transform.up);
+                        isGrounded = true;
+                        isFlying = false;
+                        transform.position = antennaeObj.transform.position;
+                        Physics.IgnoreLayerCollision(Constants.Layers.GroundLayer, Constants.Layers.ShovelLayer, false);
                     }
                 }
+
+
+                //if (Physics.SphereCast(antennaeObj.transform.position, groundCastRadius, (transform.position - antennaeObj.transform.position).normalized, out RaycastHit hitinfo, groundCastDist, groundedMask))
+                //{
+                //    if (!isAntennaeInDirt)
+                //    {
+                //            localDown.transform.position = hitinfo.point + hitinfo.normal;
+                //            localDown.transform.LookAt(hitinfo.point, localDown.transform.up);
+                //            isGrounded = true;
+                //            isFlying = false;
+                //            transform.position = antennaeObj.transform.position;
+                //            Physics.IgnoreLayerCollision(Constants.Layers.GroundLayer, Constants.Layers.ShovelLayer, false);
+                //    }
+                //}
             }
         }
     }
@@ -251,6 +279,7 @@ public class HeroBehaviour : MonoBehaviour
                     //dig into the dirt
                     if (!IsFlying)
                     {
+                        antennaeObj.transform.position = transform.position;
                         transform.position = transform.position + localDown.forward;
                         IsFlying = true;
                     }
