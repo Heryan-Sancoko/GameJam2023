@@ -22,6 +22,7 @@ public class HeroBehaviour : MonoBehaviour
         get { return isFlying; }
         set
         {
+            Debug.LogError("wat");
             isFlying = value;
             if (myHerotype == heroType.shovel)
             {
@@ -83,7 +84,7 @@ public class HeroBehaviour : MonoBehaviour
 
         if (myHerotype == heroType.shovel)
         {
-            shovelGravity = (!isFlying) ? localDown.forward * 10 : Vector3.zero;
+            shovelGravity = (!IsFlying) ? localDown.forward * 10 : Vector3.zero;
 
             rbody.useGravity = false;
 
@@ -230,16 +231,38 @@ public class HeroBehaviour : MonoBehaviour
             {
                 if (!isAntennaeInDirt)
                 {
+
                     lastGroundedPosition = transform.position;
                     if (Physics.Raycast(antennaeObj.position, (transform.position - antennaeObj.position).normalized, out RaycastHit hitinfo, Vector3.Distance(transform.position, antennaeObj.position), groundedMask))
                     {
-                        localDown.transform.position = hitinfo.point + hitinfo.normal;
-                        localDown.transform.LookAt(hitinfo.point, localDown.transform.up);
-                        isGrounded = true;
-                        isFlying = false;
-                        transform.position = antennaeObj.transform.position;
-                        Physics.IgnoreLayerCollision(Constants.Layers.GroundLayer, Constants.Layers.ShovelLayer, false);
-                        Physics.IgnoreLayerCollision(Constants.Layers.VinesLayer, Constants.Layers.ShovelLayer, false);
+                        bool isThereRock = false;
+
+                        List<Collider> colliders1 = Physics.OverlapSphere(antennaeObj.position, 0.05f).ToList();
+
+                        if (colliders1.Count > 0)
+                        {
+                            foreach (Collider col in colliders1)
+                            {
+                                if (col.gameObject.layer == Constants.Layers.WallLayer ||
+                                    col.gameObject.layer == Constants.Layers.GroundLayer ||
+                                    col.gameObject.layer == Constants.Layers.VinesLayer)
+                                {
+                                    isThereRock = true;
+                                }
+                            }
+                        }
+
+
+                        if (!isThereRock)
+                        {
+                            transform.position = antennaeObj.transform.position;
+                            localDown.transform.position = hitinfo.point + hitinfo.normal;
+                            localDown.transform.LookAt(hitinfo.point, localDown.transform.up);
+                            isGrounded = true;
+                            IsFlying = false;
+                            Physics.IgnoreLayerCollision(Constants.Layers.GroundLayer, Constants.Layers.ShovelLayer, false);
+                            Physics.IgnoreLayerCollision(Constants.Layers.VinesLayer, Constants.Layers.ShovelLayer, false);
+                        }
                     }
                 }
 
@@ -258,18 +281,7 @@ public class HeroBehaviour : MonoBehaviour
                 //}
             }
 
-            Collider[] colliders1;
-
-            colliders1 = Physics.OverlapSphere(antennaeObj.position, 0.05f, groundedMask);
-
-            if (colliders1.Length > 0)
-            {
-                isAntennaeInDirt = true;
-            }
-            else
-            {
-                isAntennaeInDirt = false;
-            }
+            isAntennaeInDirt = CheckIfInDirt(antennaeObj.position);
         }
     }
 
@@ -385,6 +397,7 @@ public static class Constants
     {
         public static int HeroLayer = 3;
         public static int GroundLayer = 6;
+        public static int WallLayer = 7;
         public static int SwordLayer = 8;
         public static int ShovelLayer = 9;
         public static int VinesLayer = 10;
