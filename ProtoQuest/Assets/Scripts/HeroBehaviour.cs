@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using System.Linq;
 
 public class HeroBehaviour : MonoBehaviour
 {
@@ -13,6 +14,7 @@ public class HeroBehaviour : MonoBehaviour
     public float jumpSpeed;
     public float throwSpeed;
     public GameObject heldObject;
+    public PushBlock pushingObject;
     [SerializeField]
     private bool isFlying;
     public bool IsFlying
@@ -24,6 +26,7 @@ public class HeroBehaviour : MonoBehaviour
             if (myHerotype == heroType.shovel)
             {
                 Physics.IgnoreLayerCollision(Constants.Layers.GroundLayer, Constants.Layers.ShovelLayer, value);
+                Physics.IgnoreLayerCollision(Constants.Layers.VinesLayer, Constants.Layers.ShovelLayer, value);
             }
         }
     }
@@ -57,6 +60,7 @@ public class HeroBehaviour : MonoBehaviour
 
     public bool isAntennaeInDirt;
     public Transform antennaeObj;
+    private Vector3 lastGroundedPosition;
 
     // Start is called before the first frame update
     void Start()
@@ -82,6 +86,17 @@ public class HeroBehaviour : MonoBehaviour
             shovelGravity = (!isFlying) ? localDown.forward * 10 : Vector3.zero;
 
             rbody.useGravity = false;
+
+            if (pushingObject != null)
+            {
+                rbody.velocity = Vector3.zero;
+
+                if (pushingObject.isRoutineNull == true)
+                    pushingObject = null;
+
+                //movementInput = Vector3.zero;
+                return;
+            }
         }
 
         GroundedCheck();
@@ -90,6 +105,7 @@ public class HeroBehaviour : MonoBehaviour
         //move character
         //if (movementInput != Vector3.zero)
         //{
+
         if (IsFlying)
         {
             if (myHerotype == heroType.shovel)
@@ -138,62 +154,83 @@ public class HeroBehaviour : MonoBehaviour
 
         if (myHerotype == heroType.shovel)
         {
-            Collider[] colliders1;
 
-        colliders1 = Physics.OverlapSphere(antennaeObj.position, 0.01f,groundedMask);
 
-        if (colliders1.Length > 0)
-        {
-
-            if (colliders1[0].transform == antennaeObj.transform && colliders1.Length == 1)
-            {
-                isAntennaeInDirt = false;
-            }
-            else
-            {
-                isAntennaeInDirt = true;
-            }
-        }
-        else
-        {
-            isAntennaeInDirt = false;
-        }
-
-        
             if (movementInput != Vector3.zero)
-            antennaeObj.transform.position = transform.position + movementInput;
+                antennaeObj.transform.position = transform.position + movementInput;
 
             if (!IsFlying)
             {
 
-                if (Physics.Raycast(transform.position, movementInput, out RaycastHit hit, Vector3.Distance(transform.position, antennaeObj.position), groundedMask))
+                bool wallInFront = false;
+
+                //crawl up a wall in front of you
+                if (Physics.Raycast(transform.position, (antennaeObj.transform.position - transform.position).normalized, out RaycastHit hit, Vector3.Distance(transform.position, antennaeObj.position), groundedMask))
                 {
                     //transform.position = hit.point + (hit.normal * 0.5f);
                     localDown.transform.position = hit.point + hit.normal;
                     localDown.transform.LookAt(hit.point, localDown.transform.up);
+                    wallInFront = true;
                 }
 
-                if (Physics.SphereCast(transform.position + (localDown.forward *-0.5f) + (transform.position - antennaeObj.position).normalized, groundCastRadius, localDown.forward, out RaycastHit hitinfo, groundCastDist, groundedMask))
+                //check if there is floor under your feet
+                if (Physics.SphereCast(transform.position + (localDown.forward * -0.5f), groundCastRadius, localDown.forward, out RaycastHit hitinfo, groundCastDist, groundedMask))
                 {
+                    lastGroundedPosition = transform.position;
                     isGrounded = true;
                 }
-                else if (Physics.SphereCast(transform.position + (localDown.forward*0.5f) + ((antennaeObj.position - transform.position).normalized*0.5f), groundCastRadius, (transform.position - antennaeObj.position).normalized, out RaycastHit hitinfoTwo, groundCastDist*2, groundedMask))
+                //if not, then check for a cliff face to cling to
+                else if (Physics.SphereCast(transform.position + (localDown.forward * 0.5f) + ((antennaeObj.position - transform.position).normalized), groundCastRadius, (transform.position - antennaeObj.position).normalized, out RaycastHit hitinfoTwo, groundCastDist * 3, groundedMask))
                 {
-                    Debug.LogError("UNDETECTED GROUND");
-                    
-                    if (Physics.OverlapSphere(hitinfoTwo.point + (hitinfoTwo.normal * 0.5f), 0.01f).Length == 0)
+
+                    //if (Physics.OverlapSphere(hitinfoTwo.point + (hitinfoTwo.normal * 0.5f), 0.01f).Length == 0)
+                    //{
+                    //    rbody.velocity = Vector3.zero;
+                    //    transform.position = hitinfoTwo.point + (hitinfoTwo.normal * 0.5f);
+                    //    localDown.transform.position = hitinfoTwo.point + hitinfoTwo.normal;
+                    //    localDown.transform.LookAt(hitinfoTwo.point, localDown.transform.up);
+                    //}
+                    ////else if you are nowhere near a wall, just fall down.
+                    //else
+                    if (!wallInFront)
                     {
-                        transform.position = hitinfoTwo.point + (hitinfoTwo.normal * 0.5f);
-                        localDown.transform.position = hitinfoTwo.point + hitinfoTwo.normal;
-                        localDown.transform.LookAt(hitinfoTwo.point, localDown.transform.up);
+                        Vector3[] cardinalDirections = { localDown.forward, Vector3.up, (Vector3.up + Vector3.left).normalized, Vector3.left, (Vector3.left + Vector3.down).normalized, Vector3.down, (Vector3.down + Vector3.right).normalized, Vector3.right, (Vector3.right + Vector3.up).normalized };
+
+                        foreach (Vector3 direction in cardinalDirections)
+                        {
+                            if (Physics.Raycast(transform.position, direction, out RaycastHit emergencyRay, 1.5f, groundedMask))
+                            {
+                                transform.position = emergencyRay.point + (emergencyRay.normal * 0.5f);
+                                rbody.velocity = Vector3.zero;
+                                localDown.transform.position = emergencyRay.point + emergencyRay.normal;
+                                localDown.transform.LookAt(emergencyRay.point, localDown.transform.up);
+                                break;
+                            }
+                        }
+
+                        Debug.LogError("Last grounded pos: " + lastGroundedPosition);
+                        transform.position = lastGroundedPosition;
                     }
 
                 }
+                else
+                {
+                    Debug.LogError("Last grounded pos: " + lastGroundedPosition);
+                    if (lastGroundedPosition != Vector3.zero)
+                        transform.position = lastGroundedPosition;
+                }
+
+                if (CheckIfInDirt(transform.position))
+                {
+                    IsFlying = true;
+                }
+
             }
             else
             {
                 if (!isAntennaeInDirt)
                 {
+                    lastGroundedPosition = transform.position;
                     if (Physics.Raycast(antennaeObj.position, (transform.position - antennaeObj.position).normalized, out RaycastHit hitinfo, Vector3.Distance(transform.position, antennaeObj.position), groundedMask))
                     {
                         localDown.transform.position = hitinfo.point + hitinfo.normal;
@@ -202,6 +239,7 @@ public class HeroBehaviour : MonoBehaviour
                         isFlying = false;
                         transform.position = antennaeObj.transform.position;
                         Physics.IgnoreLayerCollision(Constants.Layers.GroundLayer, Constants.Layers.ShovelLayer, false);
+                        Physics.IgnoreLayerCollision(Constants.Layers.VinesLayer, Constants.Layers.ShovelLayer, false);
                     }
                 }
 
@@ -219,6 +257,35 @@ public class HeroBehaviour : MonoBehaviour
                 //    }
                 //}
             }
+
+            Collider[] colliders1;
+
+            colliders1 = Physics.OverlapSphere(antennaeObj.position, 0.05f, groundedMask);
+
+            if (colliders1.Length > 0)
+            {
+                isAntennaeInDirt = true;
+            }
+            else
+            {
+                isAntennaeInDirt = false;
+            }
+        }
+    }
+
+    public bool CheckIfInDirt( Vector3 pos)
+    {
+        Collider[] colliders1;
+
+        colliders1 = Physics.OverlapSphere(pos, 0.05f, groundedMask);
+
+        if (colliders1.Length > 0)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
         }
     }
 
@@ -286,11 +353,26 @@ public class HeroBehaviour : MonoBehaviour
                     else
                     {
                         //return to closest point outside the wall
-                        IsFlying = false;
+                        //IsFlying = false;
                     }
                     break;
                 case heroType.sword:
                     break;
+            }
+        }
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (myHerotype == heroType.shovel)
+        {
+            if (collision.gameObject.layer == Constants.Layers.PushBlockLayer)
+            {
+                if (collision.gameObject.TryGetComponent(out PushBlock pushblock))
+                {
+                    pushblock.PushThisBlock((collision.transform.position - lastGroundedPosition).normalized);
+                    pushingObject = pushblock;
+                }
             }
         }
     }
@@ -305,5 +387,8 @@ public static class Constants
         public static int GroundLayer = 6;
         public static int SwordLayer = 8;
         public static int ShovelLayer = 9;
+        public static int VinesLayer = 10;
+        public static int PushBlockLayer = 11;
+        public static int ExitBlockLayer = 12;
     }
 }
