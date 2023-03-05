@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
 public class PushBlock : MonoBehaviour
 {
@@ -12,6 +13,8 @@ public class PushBlock : MonoBehaviour
     private HeroManager hMan;
     [SerializeField]
     private LayerMask vineLayerMask;
+    [SerializeField]
+    private LayerMask everythingBUTvinesMaks;
 
     // Start is called before the first frame update
     void Start()
@@ -28,8 +31,6 @@ public class PushBlock : MonoBehaviour
 
     public void PushThisBlock(Vector3 pushDir)
     {
-        Debug.LogError("PUSHING BLOCK");
-
         Vector3[] cardinalDirections = { Vector3.up, Vector3.down, Vector3.left, Vector3.right };
         float maxDotProduct = float.MinValue;
         Vector3 closestDirection = Vector3.zero;
@@ -44,20 +45,66 @@ public class PushBlock : MonoBehaviour
                 closestDirection = direction;
             }
         }
+
+
         if (pushRoutine == null)
         {
-            rbody.constraints = RigidbodyConstraints.FreezePositionZ | RigidbodyConstraints.FreezeRotation;
-            pushRoutine = StartCoroutine(PushRoutine(closestDirection));
+
+            float pushMag = 2;
+
+            if (Physics.SphereCast(transform.position,0.1f, closestDirection, out RaycastHit hit, 4, everythingBUTvinesMaks))
+            {
+                if (hit.collider.gameObject.layer != Constants.Layers.VinesLayer)
+                {
+                    float dist = Vector3.Distance(transform.position, hit.point);
+
+                    if (dist <= 2.1f && dist >= 1.5f)
+                    {
+                        pushMag = 1;
+                    }
+                    else if (dist < 1.5f && dist >= 1f && pushMag > dist)
+                    {
+                        pushMag = 0.5f;
+
+                    }
+                    else if (dist < 1f && pushMag > dist)
+                    {
+                        pushMag = 0;
+                    }
+
+                }
+            }
+
+            if (pushMag <= 0.5f)
+            {
+                isRoutineNull = true;
+                pushRoutine = null;
+            }
+            else
+            {
+                rbody.constraints = RigidbodyConstraints.FreezePositionZ | RigidbodyConstraints.FreezeRotation;
+                pushRoutine = StartCoroutine(PushRoutine(closestDirection, pushMag));
+            }
         }
     }
 
-    private IEnumerator PushRoutine(Vector3 pushDir)
+    private void OnCollisionEnter(Collision collision)
     {
+        if (collision.gameObject.layer == Constants.Layers.BreakableBlockLayer)
+        {
+            
+        }
+    }
+
+    private IEnumerator PushRoutine(Vector3 pushDir, float pushMagnitude)
+    {
+
+
         isRoutineNull = false;
         rbody.constraints = RigidbodyConstraints.FreezePositionZ | RigidbodyConstraints.FreezeRotation;
         rbody.isKinematic = true;
         rbody.useGravity = false;
-        Vector3 newPos = transform.position + (pushDir * 2);
+        Vector3 newPos = transform.position + (pushDir * pushMagnitude);
         while (transform.position != newPos)
         {
             transform.position = Vector3.MoveTowards(transform.position, newPos, 0.1f);
@@ -74,7 +121,6 @@ public class PushBlock : MonoBehaviour
         {
             for (int i = 0; i < hitColliders.Length; i++)
             {
-                Debug.LogError("VINES DETECTED");
                 //rbody.isKinematic = true;
                 rbody.useGravity = false;
                 rbody.constraints = RigidbodyConstraints.FreezePosition | RigidbodyConstraints.FreezeRotation;
@@ -87,8 +133,10 @@ public class PushBlock : MonoBehaviour
         rbody.velocity = Vector3.zero;
 
         Vector3 roundedPos = transform.position;
-        roundedPos.x = Mathf.RoundToInt(roundedPos.x);
-        roundedPos.y = Mathf.RoundToInt(roundedPos.y);
+        roundedPos.x = Mathf.RoundToInt(roundedPos.x*2);
+        roundedPos.x /= 2;
+        roundedPos.y = Mathf.RoundToInt(roundedPos.y*2);
+        roundedPos.y /= 2;
         roundedPos.z = 0;
 
         transform.position = roundedPos;

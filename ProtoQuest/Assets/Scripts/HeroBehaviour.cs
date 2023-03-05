@@ -22,7 +22,6 @@ public class HeroBehaviour : MonoBehaviour
         get { return isFlying; }
         set
         {
-            Debug.LogError("wat");
             isFlying = value;
             if (myHerotype == heroType.shovel)
             {
@@ -209,14 +208,12 @@ public class HeroBehaviour : MonoBehaviour
                             }
                         }
 
-                        Debug.LogError("Last grounded pos: " + lastGroundedPosition);
                         transform.position = lastGroundedPosition;
                     }
 
                 }
                 else
                 {
-                    Debug.LogError("Last grounded pos: " + lastGroundedPosition);
                     if (lastGroundedPosition != Vector3.zero)
                         transform.position = lastGroundedPosition;
                 }
@@ -374,16 +371,19 @@ public class HeroBehaviour : MonoBehaviour
         }
     }
 
-    private void OnCollisionEnter(Collision collision)
+    private void OnCollisionStay(Collision collision)
     {
         if (myHerotype == heroType.shovel)
         {
             if (collision.gameObject.layer == Constants.Layers.PushBlockLayer)
             {
-                if (collision.gameObject.TryGetComponent(out PushBlock pushblock))
+                if (Vector3.Dot(collision.contacts[0].normal, movementInput) < -0.9f)
                 {
-                    pushblock.PushThisBlock((collision.transform.position - lastGroundedPosition).normalized);
-                    pushingObject = pushblock;
+                    if (collision.gameObject.TryGetComponent(out PushBlock pushblock))
+                    {
+                        pushblock.PushThisBlock(movementInput.normalized);
+                        pushingObject = pushblock;
+                    }
                 }
             }
         }
@@ -403,5 +403,6 @@ public static class Constants
         public static int VinesLayer = 10;
         public static int PushBlockLayer = 11;
         public static int ExitBlockLayer = 12;
+        public static int BreakableBlockLayer = 13;
     }
 }
