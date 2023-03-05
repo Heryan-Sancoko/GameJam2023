@@ -68,7 +68,7 @@ public class PushBlock : MonoBehaviour
         rbody.isKinematic = false;
         rbody.useGravity = true;
 
-        RaycastHit[] hitColliders = Physics.BoxCastAll(transform.position + (Vector3.forward*-1), Vector3.one, Vector3.forward, Quaternion.identity, 2, vineLayerMask);
+        RaycastHit[] hitColliders = Physics.BoxCastAll(transform.position + (Vector3.forward*-1), Vector3.one*0.5f, Vector3.forward, Quaternion.identity, 2, vineLayerMask);
 
         if (hitColliders.Length > 0)
         {
