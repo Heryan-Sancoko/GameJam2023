@@ -725,6 +725,9 @@ MonoBehaviour:
   groundedMask:
     serializedVersion: 2
     m_Bits: 64
+  walkableSurfaceMask:
+    serializedVersion: 2
+    m_Bits: 0
   groundCastRadius: 0.7
   groundCastDist: 1
   groundTestSphere: {fileID: 2872062659676227745}
@@ -1100,6 +1103,9 @@ MonoBehaviour:
   groundedMask:
     serializedVersion: 2
     m_Bits: 1088
+  walkableSurfaceMask:
+    serializedVersion: 2
+    m_Bits: 13504
   groundCastRadius: 0.7
   groundCastDist: 0.4
   groundTestSphere: {fileID: 2872062660363485258}
