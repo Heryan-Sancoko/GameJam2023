@@ -136,8 +136,9 @@ public class HeroBehaviour : MonoBehaviour
         if (hMan.SelectedHero != myHerotype)
             return;
 
-
-        Collider[] colliders1;
+        if (myHerotype == heroType.shovel)
+        {
+            Collider[] colliders1;
 
         colliders1 = Physics.OverlapSphere(antennaeObj.position, 0.01f,groundedMask);
 
@@ -158,8 +159,7 @@ public class HeroBehaviour : MonoBehaviour
             isAntennaeInDirt = false;
         }
 
-        if (myHerotype == heroType.shovel)
-        {
+        
             if (movementInput != Vector3.zero)
             antennaeObj.transform.position = transform.position + movementInput;
 
