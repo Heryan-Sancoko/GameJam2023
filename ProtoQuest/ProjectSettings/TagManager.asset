@@ -8,17 +8,17 @@ TagManager:
   - Default
   - TransparentFX
   - Ignore Raycast
-  - 
+  - Hero
   - Water
   - UI
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
+  - Ground
+  - Wall
+  - Sword
+  - Shovel
+  - Vines
+  - PushBlocks
+  - ExitBlocks
+  - BreakableBlocks
   - 
   - 
   - 
