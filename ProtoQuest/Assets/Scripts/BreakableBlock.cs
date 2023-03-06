@@ -4,15 +4,12 @@ using UnityEngine;
 
 public class BreakableBlock : MonoBehaviour
 {
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
+    [SerializeField]
+    private ParticleSystem explosionParticlePrefab;
 
-    // Update is called once per frame
-    void Update()
+    public void BreakBlock()
     {
-        
+        Instantiate(explosionParticlePrefab, transform.position, Quaternion.identity, null);
+        Destroy(gameObject);
     }
 }

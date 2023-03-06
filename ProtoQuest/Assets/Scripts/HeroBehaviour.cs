@@ -116,27 +116,10 @@ public class HeroBehaviour : MonoBehaviour
         }
         else
         {
-            if (myHerotype != heroType.shovel)
-            {
-                rbody.useGravity = true;
-                Vector3 flatvel = movementInput.normalized * (moveSpeed * 0.5f);
-                flatvel.y = 0;
+            Vector3 flatvel = movementInput.normalized * (moveSpeed * 0.5f);
+            flatvel.y = rbody.velocity.y;
 
-                if (isGrounded && rbody.velocity.y <= 0)
-                    rbody.velocity = flatvel;
-                else
-                {
-                    Vector3 fallingVel = Vector3.up * rbody.velocity.y;
-                    rbody.velocity = flatvel + fallingVel;
-                }
-            }
-            else
-            {
-                Vector3 flatvel = movementInput.normalized * (moveSpeed * 0.5f);
-                flatvel.y = rbody.velocity.y;
-
-                rbody.velocity = flatvel;
-            }
+            rbody.velocity = flatvel;
         }
         //}
 
@@ -199,6 +182,17 @@ public class HeroBehaviour : MonoBehaviour
             }
 
             isAntennaeInDirt = CheckIfInDirt(antennaeObj.position);
+        }
+        else
+        {
+            if (Physics.SphereCast(transform.position + (Vector3.up * 0.5f), groundCastRadius, Vector3.down, out RaycastHit hit, groundCastDist, walkableSurfaceMask))
+            {
+                isGrounded = true;
+            }
+            else
+            {
+                isGrounded = false;
+            }
         }
     }
 

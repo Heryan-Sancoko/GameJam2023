@@ -727,7 +727,7 @@ MonoBehaviour:
     m_Bits: 64
   walkableSurfaceMask:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 15553
   groundCastRadius: 0.7
   groundCastDist: 1
   groundTestSphere: {fileID: 2872062659676227745}
@@ -737,6 +737,7 @@ MonoBehaviour:
   localDown: {fileID: 0}
   isAntennaeInDirt: 0
   antennaeObj: {fileID: 0}
+  isjumping: 0
 --- !u!54 &2872062659640539682
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -1115,6 +1116,7 @@ MonoBehaviour:
   localDown: {fileID: 1677563478}
   isAntennaeInDirt: 0
   antennaeObj: {fileID: 2872062659635212619}
+  isjumping: 0
 --- !u!54 &2872062659808287236
 Rigidbody:
   m_ObjectHideFlags: 0

@@ -90,9 +90,15 @@ public class PushBlock : MonoBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
-        if (collision.gameObject.layer == Constants.Layers.BreakableBlockLayer)
+        if (collision.gameObject.layer == Constants.Layers.BreakableBlockLayer || collision.gameObject.layer == Constants.Layers.ExitBlockLayer)
         {
-            
+            if (rbody.useGravity == true && transform.position.y > collision.transform.position.y && Mathf.Abs(collision.relativeVelocity.y) > 1)
+            {
+                if (collision.gameObject.TryGetComponent(out BreakableBlock bBlock))
+                {
+                    bBlock.BreakBlock();
+                }
+            }
         }
     }
 
@@ -145,5 +151,6 @@ public class PushBlock : MonoBehaviour
         pushRoutine = null;
         yield return null;
     }
+
 
 }
