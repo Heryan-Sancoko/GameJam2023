@@ -66,6 +66,19 @@ public class HeroBehaviour : MonoBehaviour
 
     public bool isjumping = false;
 
+    public Collider beetleHands;
+    public Transform holdPoint;
+
+    //animation variables ===================
+    [SerializeField]
+    private Transform mModel;
+
+
+
+
+
+
+
     // Start is called before the first frame update
     void Start()
     {
@@ -123,6 +136,12 @@ public class HeroBehaviour : MonoBehaviour
         }
         //}
 
+        if (mModel != null)
+        {
+            Vector3 lookDir = movementInput;
+            lookDir.y = 0;
+            mModel.transform.LookAt(mModel.position - lookDir);
+        }
     }
 
     private void GroundedCheck()
@@ -302,13 +321,20 @@ public class HeroBehaviour : MonoBehaviour
                             IsFlying = true;
                         }
                     }
-                    else
-                    {
-                        //return to closest point outside the wall
-                        //IsFlying = false;
-                    }
                     break;
                 case heroType.sword:
+                    List<RaycastHit> sphereHit = Physics.SphereCastAll(beetleHands.transform.position + (Vector3.forward * -1), beetleHands.bounds.extents.x, Vector3.forward, 2).ToList();
+
+                    foreach (RaycastHit hit in sphereHit)
+                    {
+                        if (hit.collider.gameObject.layer == Constants.Layers.BreakableBlockLayer)
+                        {
+                            if (hit.collider.gameObject.TryGetComponent(out BreakableBlock bBlock))
+                            {
+                                bBlock.BreakBlock();
+                            }
+                        }
+                    }
                     break;
             }
         }

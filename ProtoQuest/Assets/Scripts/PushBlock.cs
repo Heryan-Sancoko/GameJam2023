@@ -26,7 +26,19 @@ public class PushBlock : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+        if (Physics.Raycast(transform.position, Vector3.down, out RaycastHit hitinfo, 1.1f))
+        {
+            IsLandingOnBreakable(hitinfo.collider);
+            Vector3 rounded = transform.position;
+            rounded.y = (Mathf.RoundToInt(rounded.y*2));
+            rounded.y = rounded.y * 0.5f;
+            transform.position = rounded;
+            rbody.isKinematic = true;
+        }
+        else
+        {
+            rbody.isKinematic = false;
+        }
     }
 
     public void PushThisBlock(Vector3 pushDir)
@@ -90,6 +102,11 @@ public class PushBlock : MonoBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
+        IsLandingOnBreakable(collision);
+    }
+
+    private bool IsLandingOnBreakable(Collision collision)
+    {
         if (collision.gameObject.layer == Constants.Layers.BreakableBlockLayer || collision.gameObject.layer == Constants.Layers.ExitBlockLayer)
         {
             if (rbody.useGravity == true && transform.position.y > collision.transform.position.y && Mathf.Abs(collision.relativeVelocity.y) > 1)
@@ -97,9 +114,28 @@ public class PushBlock : MonoBehaviour
                 if (collision.gameObject.TryGetComponent(out BreakableBlock bBlock))
                 {
                     bBlock.BreakBlock();
+                    return true;
                 }
             }
         }
+        return false;
+    }
+
+
+    private bool IsLandingOnBreakable(Collider collision)
+    {
+        if (collision.gameObject.layer == Constants.Layers.BreakableBlockLayer || collision.gameObject.layer == Constants.Layers.ExitBlockLayer)
+        {
+            if (rbody.useGravity == true && transform.position.y > collision.transform.position.y && rbody.velocity.y < -0.5f)
+            {
+                if (collision.gameObject.TryGetComponent(out BreakableBlock bBlock))
+                {
+                    bBlock.BreakBlock();
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private IEnumerator PushRoutine(Vector3 pushDir, float pushMagnitude)
@@ -152,5 +188,6 @@ public class PushBlock : MonoBehaviour
         yield return null;
     }
 
+    
 
 }
